@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -25,6 +26,8 @@ var (
 
 	currency = "USD"
 	amount   = 0.0
+
+	mustAlert = true
 )
 
 type Spot struct {
@@ -103,7 +106,7 @@ func check() {
 
 		fmt.Printf("%v %s\n", data, diff)
 
-		if amount > data.Amount || diff == "" {
+		if mustAlert && (amount > data.Amount || diff == "") {
 			go alert()
 		}
 
@@ -112,6 +115,28 @@ func check() {
 }
 
 func main() {
+	intervalPtr := flag.Int("interval", 300, "interval in seconds to query the Bitcoin price")
+	currencyPtr := flag.String("currency", "USD", "currency to query the Bitcoin price")
+	amountPtr := flag.Float64("amount", 0.0, "amount to start from comparing with current Bitcoin price")
+
+	alertPtr := flag.Bool("alert", true, "enable alerting when Bitcoin price is falling")
+
+	flag.Parse()
+
+	if intervalPtr != nil {
+		interval = *intervalPtr
+	}
+	if currencyPtr != nil {
+		currency = *currencyPtr
+	}
+	if amountPtr != nil {
+		amount = *amountPtr
+	}
+
+	if alertPtr != nil {
+		mustAlert = *alertPtr
+	}
+
 	// create a context with cancel() callback function
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -129,12 +154,10 @@ func main() {
 	)
 
 	go func() {
-		fmt.Printf("EXITING: %+v\n", <-sig)
+		fmt.Printf("%+v\n", <-sig)
 
 		cancel()
 	}()
-
-	fmt.Println("RUNNING")
 
 	check()
 
@@ -147,6 +170,4 @@ loop:
 			check()
 		}
 	}
-
-	fmt.Println("EXIT")
 }
