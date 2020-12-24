@@ -84,7 +84,7 @@ func percentage(old float64, new float64) string {
 	percentage := ((new - old) / old) * 100
 
 	if math.IsInf(percentage, 0) {
-		percentage = 0.0
+		return ""
 	}
 	if percentage >= 0.0 {
 		sign = "+"
@@ -97,7 +97,7 @@ func check() {
 	if data, err := price(currency); err != nil {
 		log.Fatal(err)
 	} else {
-		fmt.Printf("%v (%.2f) %s\n", data, amount, percentage(amount, data.Amount))
+		fmt.Printf("%v %s\n", data, percentage(amount, data.Amount))
 
 		if amount > data.Amount {
 			go alert()
