@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"os/signal"
@@ -77,11 +78,26 @@ func alert() error {
 	return nil
 }
 
+func percentage(old float64, new float64) string {
+	var sign string
+
+	percentage := ((new - old) / old) * 100
+
+	if math.IsInf(percentage, 0) {
+		percentage = 0.0
+	}
+	if percentage >= 0.0 {
+		sign = "+"
+	}
+
+	return fmt.Sprintf("%s%.2f%%", sign, percentage)
+}
+
 func check() {
 	if data, err := price(currency); err != nil {
 		log.Fatal(err)
 	} else {
-		fmt.Printf("%v (%v) %.2f%%\n", data, amount, (amount / data.Amount))
+		fmt.Printf("%v (%.2f) %s\n", data, amount, percentage(amount, data.Amount))
 
 		if amount > data.Amount {
 			go alert()
