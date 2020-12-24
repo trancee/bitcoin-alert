@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -15,6 +16,8 @@ import (
 
 	"github.com/hajimehoshi/go-mp3"
 	"github.com/hajimehoshi/oto"
+
+	"github.com/trancee/bitcoin-alert/asset"
 )
 
 var (
@@ -51,13 +54,12 @@ func price(currency string) (*Spot, error) {
 }
 
 func alert() error {
-	f, err := os.Open("suffer.mp3")
+	data, err := asset.Asset("asset/suffer.mp3")
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 
-	d, err := mp3.NewDecoder(f)
+	d, err := mp3.NewDecoder(bytes.NewReader(data))
 	if err != nil {
 		return err
 	}
@@ -97,9 +99,11 @@ func check() {
 	if data, err := price(currency); err != nil {
 		log.Fatal(err)
 	} else {
-		fmt.Printf("%v %s\n", data, percentage(amount, data.Amount))
+		diff := percentage(amount, data.Amount)
 
-		if amount > data.Amount {
+		fmt.Printf("%v %s\n", data, diff)
+
+		if amount > data.Amount || diff == "" {
 			go alert()
 		}
 
